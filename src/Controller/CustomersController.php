@@ -18,6 +18,10 @@ class CustomersController extends AppController
         // cause problems with normal functioning of AuthComponent.
         $this->Auth->allow();
     }
+    public function index(){
+        $this->set('users', $this->paginate($this->Customers));
+    }
+
 
     public function login()
     {
@@ -38,12 +42,7 @@ class CustomersController extends AppController
        return $this->redirect($this->Auth->logout());
     }
 
-     public function index()
-     {
-        $this->autoRender = false;
-        $this->set('users', $this->Customers->find('all'));
-    }
-
+     
     public function view($id)
     {
         if (!$id) {

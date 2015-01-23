@@ -19,6 +19,9 @@ use Cake\Controller\Component\AuthComponent;
 use Cake\Event\Event;
 use Cake\Network\Exception\NotFoundException;
 use Cake\Network\Exception\UnauthorizedException;
+
+
+
 /**
  * Application Controller
  *
@@ -41,11 +44,38 @@ class AppController extends Controller {
         'Auth' ,
         'Flash',
     ];
+    protected $_CustomersAutentication = array(
+             'authenticate'=> [
+                AuthComponent::ALL => ['userModel' => 'Customers'],
+                'Form' => [
+                    'fields' => ['username' => 'email', 'password' => 'password']
+                    ],
+             ],
+            'authError'=> 'Área restrita, identifique-se primeiro.',
+            'sessionKey' => 'Auth.Customer', 
+            'loginAction' => ['controller' => 'customers', 'action' => 'login', 'customer' => true], 
+            'loginRedirect' => '/', 
+            'logoutRedirect' => '/');
+
+    protected $_UsersAutentication = array(
+             'authenticate'=> [
+                AuthComponent::ALL => ['userModel' => 'Users'],
+                'Form' => [
+                    'fields' => ['username' => 'email', 'password' => 'password']
+                    ],
+             ],
+            'authError'=> 'Área restrita, identifique-se primeiro.',
+            'sessionKey' => 'Auth.Admin', 
+            'loginAction' => ['controller' => 'users', 'action' => 'login', 'admin' => true], 
+            'loginRedirect' => '/admin', 
+            'logoutRedirect' => '/admin/login');
+
     
     public $helpers = ['Form'];
 
     public function beforeFilter(Event $e) {
-
+        $name = $this->request->session()->read();
+        pr($name);
         $this->_manageAuthConfigs();
     }
     
@@ -58,10 +88,9 @@ class AppController extends Controller {
 
     public function beforeRender(Event $e) {
         // set in the view the currentUser
-        if (!empty(($this->Auth->user()))) $authUser = $this->Auth->user();
-        $this->set(['authUser'=>$authUser]);
 
-        pr($authUser);
+        $authUser = !empty($this->Auth->user()) ? $this->Auth->user() : null;
+        $this->set(['authUser'=>$authUser]);
 
         // set in view the body class
         $this->set('bodyClass', 
@@ -71,32 +100,19 @@ class AppController extends Controller {
 
     private function _manageAuthConfigs() {
        
-        // if the customer user
-        $this->Auth->authError = 'Área restrita, identifique-se primeiro.';
-        $this->Auth->sessionKey = 'Auth.Customer';
+         $this->Auth->config($this->_CustomersAutentication);
 
-        $this->Auth->loginAction = array('controller' => 'customers', 'action' => 'login', 'customer' => true);
-        $this->Auth->loginRedirect = '/';
-        $this->Auth->logoutRedirect = '/';
-        $this->Auth->authenticate = array(
-            'Form' => array(
-                'userModel' => 'Customer',
-                'fields' => array('username' => 'email'),
-            ),
-        );
         // if the user admin
         if ($this->isPrefix('admin')) {
-            $this->Auth->authError = 'Área restrita, identifique-se primeiro.';
-            $this->Auth->sessionKey = 'Auth.Admin';
-            $this->Auth->loginAction = array('controller' => 'users', 'action' => 'login', 'admin' => true);
-            $this->Auth->loginRedirect = '/admin';
-            $this->Auth->logoutRedirect = '/admin/login';
-            $this->Auth->authenticate = array('Form' => array('userModel' => 'User'));
+
+            $this->Auth->config($this->_UsersAutentication);
 
             $this->Auth->allow('login');
+
         } elseif ($this->isPrefix('customer')) {
 
             $this->Auth->deny();
+
         } else {
 
             $this->Auth->allow();

@@ -59,6 +59,7 @@ Router::scope('/', function ($routes) {
     $routes->connect('/', ['controller' => 'Articles', 'action' => 'index']);
     $routes->connect('/login', ['controller' => 'Customers', 'action' => 'login']);
     $routes->connect('/logout', ['controller' => 'Customers', 'action' => 'logout']);
+    $routes->connect('/add', ['controller' => 'Customers', 'action' => 'add']);
 
     $routes->connect('/:controller', ['action' => 'index']);
     $routes->connect('/:controller/:action/*');
